@@ -5,6 +5,7 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 	"io"
 	"os"
+	"strings"
 )
 
 type ConfigFunc func(*Config)
@@ -94,5 +95,42 @@ func (q *Question) AskSecurely(question string) (string, error) {
 		}
 
 		return string(pw), nil
+	}
+}
+
+// AskForConfirmation asks your question and appends a yes/no response expectation
+// If the answer is no what is expected it prompts the user again with a hint
+// A true|false boolean is returned or an error
+func (q *Question) AskForConfirmation(question string) (bool, error) {
+	var repeat bool
+
+	for {
+		if repeat == false {
+			if err := q.config.template.Write([]byte(question + " [y/n]:")); err != nil {
+				return false, err
+			}
+		}
+
+		response, err := q.reader.ReadString('\n')
+
+		if err != nil {
+			return false, err
+		}
+
+		response = strings.ToLower(strings.TrimSpace(response))
+
+		switch response {
+		case "y":
+			return true, nil
+		case "yes":
+			return true, nil
+		case "n":
+			return false, nil
+		case "no":
+			return false, nil
+		default:
+			q.config.template.Write([]byte("y,n,yes,no?"))
+			repeat = true
+		}
 	}
 }
