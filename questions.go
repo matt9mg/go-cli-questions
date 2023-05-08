@@ -76,7 +76,13 @@ func (q *Question) Ask(question string) (string, error) {
 			return "", err
 		}
 
-		return q.reader.ReadString('\n')
+		resp, err := q.reader.ReadString('\n')
+
+		if err != nil {
+			return "", err
+		}
+
+		return strings.TrimSpace(resp), nil
 	}
 }
 
